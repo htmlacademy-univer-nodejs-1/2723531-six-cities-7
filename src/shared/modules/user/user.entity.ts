@@ -4,8 +4,11 @@ import {
   modelOptions,
   prop
 } from '@typegoose/typegoose';
+import type {Ref} from '@typegoose/typegoose';
+import {Types} from 'mongoose';
 import {USER_TYPES} from '../../types/index.js';
 import type {User, UserType} from '../../types/index.js';
+import type {OfferEntity} from '../offer/offer.entity.js';
 
 @modelOptions({
   schemaOptions: {
@@ -22,7 +25,7 @@ export class UserEntity extends defaultClasses.TimeStamps implements User {
   @prop()
   public avatarPath?: string;
 
-  @prop({required: true})
+  @prop({required: true, select: false})
   public password!: string;
 
   @prop({
@@ -32,6 +35,9 @@ export class UserEntity extends defaultClasses.TimeStamps implements User {
     default: 'regular',
   })
   public type!: UserType;
+
+  @prop({ref: 'OfferEntity', type: () => [Types.ObjectId], default: []})
+  public favoriteOffers!: Ref<OfferEntity>[];
 }
 
 export const UserModel = getModelForClass(UserEntity);
