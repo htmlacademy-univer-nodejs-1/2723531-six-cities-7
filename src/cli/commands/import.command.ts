@@ -23,8 +23,7 @@ export class ImportCommand implements CommandInterface {
   private async onImportedLine(line: string, lineNumber: number, salt: string): Promise<void> {
     try {
       const offer = createOffer(line);
-      const user = await this.userService.findByEmail(offer.user.email)
-        ?? await this.userService.create(offer.user, salt);
+      const user = await this.userService.findOrCreate(offer.user, salt);
 
       await this.offerService.create({
         title: offer.title,
@@ -34,8 +33,6 @@ export class ImportCommand implements CommandInterface {
         previewImage: offer.previewImage,
         images: offer.images,
         isPremium: offer.isPremium,
-        isFavorite: offer.isFavorite,
-        rating: offer.rating,
         type: offer.type,
         bedrooms: offer.bedrooms,
         maxAdults: offer.maxAdults,
