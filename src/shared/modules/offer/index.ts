@@ -4,3 +4,8 @@ export type {OfferService} from './offer-service.interface.js';
 export {DefaultOfferService} from './default-offer.service.js';
 export {UpdateOfferDto} from './dto/update-offer.dto.js';
 export type {OfferDetails, OfferPreview} from './offer-view.type.js';
+export {OfferController} from './offer.controller.js';
+export {OfferPreviewRdo} from './rdo/offer-preview.rdo.js';
+export {OfferRdo} from './rdo/offer.rdo.js';
+export type {CreateOfferRequest} from './create-offer-request.type.js';
+export type {UpdateOfferRequest} from './update-offer-request.type.js';

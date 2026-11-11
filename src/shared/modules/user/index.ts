@@ -4,3 +4,8 @@ export {CreateUserDto} from './dto/create-user.dto.js';
 export {DefaultUserService} from './default-user.service.js';
 export {UpdateUserDto} from './dto/update-user.dto.js';
 export {USER_PUBLIC_FIELDS} from './user.constant.js';
+export {UserRdo} from './rdo/user.rdo.js';
+export {UserController} from './user.controller.js';
+export type {CreateUserRequest} from './create-user-request.type.js';
+export {LoginUserDto} from './dto/login-user.dto.js';
+export type {LoginUserRequest} from './login-user-request.type.js';
