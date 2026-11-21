@@ -3,9 +3,9 @@ import type {CreateOfferDto} from './dto/create-offer.dto.js';
 import type {OfferEntity} from './offer.entity.js';
 import type {UpdateOfferDto} from './dto/update-offer.dto.js';
 import type {OfferDetails, OfferPreview} from './offer-view.type.js';
-import type {City} from '../../types/index.js';
+import type {City, DocumentExists} from '../../types/index.js';
 
-export interface OfferService {
+export interface OfferService extends DocumentExists {
   create(dto: CreateOfferDto): Promise<DocumentType<OfferEntity>>;
 
   findById(offerId: string, userId?: string): Promise<OfferDetails | null>;
@@ -23,8 +23,6 @@ export interface OfferService {
   addToFavorites(offerId: string, userId: string): Promise<boolean>;
 
   removeFromFavorites(offerId: string, userId: string): Promise<boolean>;
-
-  exists(offerId: string): Promise<boolean>;
 
   incCommentCount(offerId: string, rating: number): Promise<DocumentType<OfferEntity> | null>;
 

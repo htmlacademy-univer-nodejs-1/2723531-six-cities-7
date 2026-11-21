@@ -8,3 +8,4 @@ export {getUserId, requireUserId} from './helpers/request-user.js';
 export type {Middleware} from './middleware/middleware.interface.js';
 export {ValidateObjectIdMiddleware} from './middleware/validate-object-id.middleware.js';
 export {ValidateDtoMiddleware} from './middleware/validate-dto.middleware.js';
+export {DocumentExistsMiddleware} from './middleware/document-exists.middleware.js';

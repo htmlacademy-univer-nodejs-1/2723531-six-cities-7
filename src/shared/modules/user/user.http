@@ -1,0 +1,12 @@
+@baseUrl = http://localhost:4000
+@userId = 507f1f77bcf86cd799439011
+
+POST {{baseUrl}}/users/{{userId}}/avatar
+Content-Type: multipart/form-data; boundary=SixCitiesAvatar
+
+--SixCitiesAvatar
+Content-Disposition: form-data; name="avatar"; filename="avatar-max.jpg"
+Content-Type: image/jpeg
+
+< ../../../../markup/img/avatar-max.jpg
+--SixCitiesAvatar--

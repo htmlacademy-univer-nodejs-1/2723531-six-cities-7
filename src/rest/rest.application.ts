@@ -51,6 +51,7 @@ export class RestApplication {
     });
     this.server.use(AVATAR_URL_PATH, express.static(this.config.get('UPLOAD_DIRECTORY'), {
       index: false,
+      dotfiles: 'ignore',
       setHeaders: (res) => res.setHeader('X-Content-Type-Options', 'nosniff'),
     }));
   }

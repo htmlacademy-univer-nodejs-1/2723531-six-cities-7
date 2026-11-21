@@ -10,3 +10,4 @@ export * from './mock-server-data.type.js';
 export * from './component.enum.js';
 export * from './sort-type.enum.js';
 export * from './http-method.enum.js';
+export type {DocumentExists} from './document-exists.interface.js';

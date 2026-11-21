@@ -1,10 +1,9 @@
-import {randomUUID} from 'node:crypto';
-import {mkdir, open, rm} from 'node:fs/promises';
-import {extname, join} from 'node:path';
+import {rename, rm} from 'node:fs/promises';
+import {join} from 'node:path';
 import {inject, injectable} from 'inversify';
 import {StatusCodes} from 'http-status-codes';
 import type {Request, Response} from 'express';
-import {BaseController, HttpError, ValidateDtoMiddleware, ValidateObjectIdMiddleware} from '../../libs/rest/index.js';
+import {BaseController, DocumentExistsMiddleware, HttpError, ValidateDtoMiddleware, ValidateObjectIdMiddleware} from '../../libs/rest/index.js';
 import {getUserId} from '../../libs/rest/helpers/request-user.js';
 import type {Logger} from '../../logger/index.js';
 import type {Config, RestSchema} from '../../libs/config/index.js';
@@ -46,7 +45,11 @@ export class UserController extends BaseController {
       path: '/:userId/avatar',
       method: HttpMethod.Post,
       handler: this.uploadAvatar,
-      middlewares: [new ValidateObjectIdMiddleware('userId'), new UploadAvatarMiddleware()],
+      middlewares: [
+        new ValidateObjectIdMiddleware('userId'),
+        new UploadAvatarMiddleware(this.config.get('UPLOAD_DIRECTORY'), logger),
+        new DocumentExistsMiddleware(userService, 'userId', 'Пользователь не найден.'),
+      ],
     });
   }
 
@@ -92,26 +95,12 @@ export class UserController extends BaseController {
       throw new HttpError(StatusCodes.BAD_REQUEST, 'Файл аватара не получен.');
     }
 
-    if (!await this.userService.findById(userId)) {
-      throw new HttpError(StatusCodes.NOT_FOUND, 'Пользователь не найден.');
-    }
-
-    const filename = `${randomUUID()}${extname(file.originalname).toLowerCase()}`;
-    const directory = this.config.get('UPLOAD_DIRECTORY');
-    const filePath = join(directory, filename);
-    const avatarPath = this.getAvatarUrl(filename);
-
-    await mkdir(directory, {recursive: true});
-    const handle = await open(filePath, 'wx');
+    const filePath = join(this.config.get('UPLOAD_DIRECTORY'), file.filename);
+    const avatarPath = this.getAvatarUrl(file.filename);
+    await rename(file.path, filePath);
     let user: Awaited<ReturnType<UserService['updateById']>>;
 
     try {
-      try {
-        await handle.writeFile(new Uint8Array(file.buffer));
-      } finally {
-        await handle.close();
-      }
-
       user = await this.userService.updateById(userId, {avatarPath});
 
       if (!user) {

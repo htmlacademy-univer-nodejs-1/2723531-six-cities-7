@@ -1,7 +1,7 @@
 import {inject, injectable} from 'inversify';
 import {StatusCodes} from 'http-status-codes';
 import type {Request, Response} from 'express';
-import {BaseController, HttpError, ValidateDtoMiddleware, ValidateObjectIdMiddleware} from '../../libs/rest/index.js';
+import {BaseController, DocumentExistsMiddleware, HttpError, ValidateDtoMiddleware, ValidateObjectIdMiddleware} from '../../libs/rest/index.js';
 import {getUserId} from '../../libs/rest/helpers/request-user.js';
 import type {Logger} from '../../logger/index.js';
 import type {City} from '../../types/index.js';
@@ -24,12 +24,14 @@ export class OfferController extends BaseController {
     @inject(Component.Logger) logger: Logger,
     @inject(Component.OfferService) private readonly offerService: OfferService,
     @inject(Component.CommentService) private readonly commentService: CommentService,
-    @inject(Component.UserService) private readonly userService: UserService,
+    @inject(Component.UserService) userService: UserService,
   ) {
     super(logger);
 
     const validateOfferId = new ValidateObjectIdMiddleware('offerId');
     const validateFavoriteUserId = new ValidateObjectIdMiddleware('userId', 'query');
+    const offerExists = new DocumentExistsMiddleware(offerService, 'offerId', 'Предложение не найдено.');
+    const favoriteUserExists = new DocumentExistsMiddleware(userService, 'userId', 'Пользователь не найден.', 'query');
 
     this.addRoute({path: '/', method: HttpMethod.Get, handler: this.index});
     this.addRoute({
@@ -39,6 +41,7 @@ export class OfferController extends BaseController {
       middlewares: [
         new ValidateDtoMiddleware(CreateOfferDto),
         new ValidateObjectIdMiddleware('userId', 'body'),
+        new DocumentExistsMiddleware(userService, 'userId', 'Автор предложения не найден.', 'body'),
       ],
     });
     this.addRoute({path: '/premium', method: HttpMethod.Get, handler: this.findPremium});
@@ -46,13 +49,13 @@ export class OfferController extends BaseController {
       path: '/favorites',
       method: HttpMethod.Get,
       handler: this.findFavorites,
-      middlewares: [validateFavoriteUserId],
+      middlewares: [validateFavoriteUserId, favoriteUserExists],
     });
     this.addRoute({
       path: '/:offerId',
       method: HttpMethod.Get,
       handler: this.show,
-      middlewares: [validateOfferId],
+      middlewares: [validateOfferId, offerExists],
     });
     this.addRoute({
       path: '/:offerId',
@@ -65,31 +68,32 @@ export class OfferController extends BaseController {
           whitelist: true,
           forbidNonWhitelisted: true,
         }),
+        offerExists,
       ],
     });
     this.addRoute({
       path: '/:offerId',
       method: HttpMethod.Delete,
       handler: this.delete,
-      middlewares: [validateOfferId],
+      middlewares: [validateOfferId, offerExists],
     });
     this.addRoute({
       path: '/:offerId/favorite',
       method: HttpMethod.Put,
       handler: this.addFavorite,
-      middlewares: [validateFavoriteUserId, validateOfferId],
+      middlewares: [validateFavoriteUserId, validateOfferId, offerExists, favoriteUserExists],
     });
     this.addRoute({
       path: '/:offerId/favorite',
       method: HttpMethod.Delete,
       handler: this.removeFavorite,
-      middlewares: [validateFavoriteUserId, validateOfferId],
+      middlewares: [validateFavoriteUserId, validateOfferId, offerExists, favoriteUserExists],
     });
     this.addRoute({
       path: '/:offerId/comments',
       method: HttpMethod.Get,
       handler: this.getComments,
-      middlewares: [validateOfferId],
+      middlewares: [validateOfferId, offerExists],
     });
   }
 
@@ -121,10 +125,6 @@ export class OfferController extends BaseController {
   }
 
   public async create({body}: CreateOfferRequest, res: Response): Promise<void> {
-    if (!await this.userService.findById(body.userId)) {
-      throw new HttpError(StatusCodes.NOT_FOUND, 'Автор предложения не найден.');
-    }
-
     const createdOffer = await this.offerService.create(body);
     const offer = await this.getOffer(createdOffer._id.toString());
     this.created(res, fillDTO(OfferRdo, offer));
@@ -191,9 +191,6 @@ export class OfferController extends BaseController {
 
   public async getComments(req: Request, res: Response): Promise<void> {
     const offerId = req.params.offerId as string;
-    if (!await this.offerService.exists(offerId)) {
-      throw new HttpError(StatusCodes.NOT_FOUND, 'Предложение не найденно');
-    }
     const comments = await this.commentService.findByOfferId(offerId);
     const commentObjects = comments.map((comment) => comment.toObject({virtuals: true}));
     this.ok(res, fillDTO(CommentRdo, commentObjects));

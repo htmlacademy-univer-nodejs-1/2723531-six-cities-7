@@ -136,6 +136,18 @@ npm run cli -- --import ./mocks/generated.tsv 'mongodb://<DB_USER>:<DB_PASSWORD>
 Импорт такого файла создаст четыре миллиона предложений в MongoDB и потребует
 соответствующего места на диске и времени на запись.
 
+## Загрузка аватара
+
+Запустите REST API и передайте существующий ID пользователя и один файл:
+
+```bash
+curl -F 'avatar=@avatar.png;type=image/png' 'http://localhost:4000/users/<userId>/avatar'
+```
+
+Сервер принимает `.jpg` и `.png` размером до 2 МиБ. Ответ содержит обновлённого
+пользователя со ссылкой в `avatarPath`. Файлы по умолчанию сохраняются в `./uploads/avatars`.
+Если API доступен по другому адресу, задайте `PUBLIC_URL`, например `https://api.example.com`.
+
 ## Структура проекта
 
 ### Директория `src`
